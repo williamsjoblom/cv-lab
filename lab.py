@@ -1,7 +1,6 @@
 import cv2
 
-import sys, lab
-
+import vision
 
 def find_ball(image):
     colorLower = (3, 100, 2)
@@ -15,4 +14,4 @@ def find_ball(image):
     image.show()
 
     
-lab.run(find_ball)
+vision.run(find_ball)
