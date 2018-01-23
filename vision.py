@@ -2,12 +2,14 @@ from collections import deque
 import colorsys
 import numpy as np
 import argparse
-import imutils
 import cv2
+
+grayscale = False
 
 class Image:
     def __init__(self, frame):
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        self.grayscale = False
 
     def show(self):
         cv2.imshow("Intermediate", self.hsv)
@@ -24,6 +26,7 @@ class Image:
             self.hsv = cv2.dilate(self.hsv, None, 2)
 
     def in_range(self, lower, upper):
+        self.grayscale = True
         if lower[0] > upper[0]: # Wrap around!
             delta_h = abs(255 - lower[0] + upper[0]) % 255
             delta_s = abs(upper[1] - lower[1]) % 255
@@ -71,9 +74,12 @@ def run(callback):
         
 	# # find contours in the mask and initialize the current
 	# # (x, y) center of the ball
-	cnts = cv2.findContours(image.hsv.copy(), cv2.RETR_EXTERNAL,
-                                cv2.CHAIN_APPROX_SIMPLE)[-2]
-	center = None
+        if image.grayscale:
+	    cnts = cv2.findContours(image.hsv.copy(), cv2.RETR_EXTERNAL,
+                                    cv2.CHAIN_APPROX_SIMPLE)[-2]
+        else:
+            cnts = []
+	    center = None
         radius = 0
 
 	# only proceed if at least one contour was found
