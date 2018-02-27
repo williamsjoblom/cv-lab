@@ -4,17 +4,16 @@ import numpy as np
 import argparse
 import cv2
 
-grayscale = False
 BUF_SZ = 64
 MIN_RADIUS = 40
-        
+
+
 class Image:
     def __init__(self, frame):
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        self.grayscale = False
+        self.bw = False
         self.frame = frame
         self.pts = deque(maxlen=BUF_SZ)
-    
 
     def show(self):
         cv2.imshow("Intermediate", self.hsv)
@@ -29,9 +28,9 @@ class Image:
     def dilate(self, n):
         for i in xrange(n):
             self.hsv = cv2.dilate(self.hsv, None, 2)
-
+            
     def in_range(self, lower, upper):
-        self.grayscale = True
+        self.bw = True
         if lower[0] > upper[0]: # Wrap around!
             delta_h = abs(255 - lower[0] + upper[0]) % 255
             delta_s = abs(upper[1] - lower[1]) % 255
@@ -57,29 +56,34 @@ class Image:
             upper = np.array(upper, dtype=np.uint8)
             self.hsv = cv2.inRange(self.hsv, lower, upper)
 
-    def get_coord(self):
-        if self.grayscale:
-	    cnts = cv2.findContours(self.hsv, cv2.RETR_EXTERNAL,
+    def min_enclosing_circle(self, min_radius):
+        if not self.bw:
+            print("Error: image contains colors other than black/white")
+            return
+        
+        cnts = cv2.findContours(self.hsv, cv2.RETR_EXTERNAL,
                                     cv2.CHAIN_APPROX_SIMPLE)[-2]
-        else:
-            cnts = []
-	    center = None
         x, y, radius = 0, 0, 0
-
-        if len(cnts) > 0:
+        if cnts and len(cnts) > 0:
 	    c = max(cnts, key=cv2.contourArea)
 	    (x, y), radius = cv2.minEnclosingCircle(c)
 	    if radius > MIN_RADIUS: 
                 return x, y, radius
-            else:
-                print("Did not find any objects. No coordinates available")
-                return 0,0,0
+        
+        return 0, 0, 0
+            
     def draw_circle(self, x, y, radius):
 	cv2.circle(self.frame, (int(x), int(y)), int(radius),
 		   (0, 255, 255), 2)
-            
 
-    
+    def draw_trail(self, trail):
+        for i in xrange(1, len(trail)):
+            if trail[i - 1] is None or trail[i] is None:
+		continue
+
+            thickness = int(np.sqrt(BUF_SZ / float(i + 1)) * 2.5)
+	    cv2.line(self.frame, trail[i - 1], trail[i], (0, 0, 255), thickness)
+            
         
 def run(callback):
     camera = cv2.VideoCapture(0)
