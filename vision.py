@@ -76,13 +76,22 @@ class Image:
 	cv2.circle(self.frame, (int(x), int(y)), int(radius),
 		   (0, 255, 255), 2)
 
-    def draw_trail(self, trail):
+    def draw_trail(self, trail, start_index=0):
+        if len(trail) < 2:
+            return
+        
         for i in xrange(1, len(trail)):
-            if trail[i - 1] is None or trail[i] is None:
+            i0 = (i - 1 + start_index) % len(trail)
+            i1 = (i + start_index) % len(trail)
+            
+            if trail[i0] is None or trail[i1] is None:
 		continue
 
             thickness = int(np.sqrt(BUF_SZ / float(i + 1)) * 2.5)
-	    cv2.line(self.frame, trail[i - 1], trail[i], (0, 0, 255), thickness)
+	    cv2.line(self.frame,
+                     (int(trail[i0][0]), int(trail[i0][1])),
+                     (int(trail[i1][0]), int(trail[i1][1])),
+                     (0, 0, 255), thickness)
             
         
 def run(callback):
