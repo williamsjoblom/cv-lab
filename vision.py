@@ -61,7 +61,7 @@ class Image:
             print("Error: image contains colors other than black/white")
             return
         
-        cnts = cv2.findContours(self.hsv, cv2.RETR_EXTERNAL,
+        cnts = cv2.findContours(self.hsv.copy(), cv2.RETR_EXTERNAL,
                                     cv2.CHAIN_APPROX_SIMPLE)[-2]
         x, y, radius = 0, 0, 0
         if cnts and len(cnts) > 0:
